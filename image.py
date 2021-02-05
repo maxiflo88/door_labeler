@@ -1,3 +1,12 @@
+import json
+import cv2
+import os
+import numpy as np
+import PIL
+from tkinter import *
+from colormap import rgb2hex
+import imutils
+from door import *
 class image:
     def __init__(self, img_path, master):
         self.img_path=img_path
@@ -163,7 +172,7 @@ class image:
         canvas.delete("all")
         img = cv2.imread(self.segm_path)
         resized=self.resize(img, wwidth, wheight)
-        resized=Image.fromarray(resized)       
-        canvas.image=ImageTk.PhotoImage(resized)
+        resized=PIL.Image.fromarray(resized)       
+        canvas.image=PIL.ImageTk.PhotoImage(resized)
         canvas.create_image(0, 0, image=canvas.image, anchor='nw')
         self.drawDoors(canvas)
