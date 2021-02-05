@@ -4,12 +4,7 @@ from PIL import ImageTk, Image, ImageDraw, ImageColor
 from tkinter import filedialog
 from glob import glob
 import os
-import cv2
 import json
-import pandas as pd
-from colormap import rgb2hex
-import imutils
-from imutils import contours
 from image import image
 class Paint(object):
     #TODO izveidot zoom f-iju
@@ -38,7 +33,6 @@ class Paint(object):
 
         self.img_next_button = Button(self.master, text='Next IMG', command=self.use_img_next)
         self.img_next_button.grid(row=2, column=5, sticky="NSEW")
-
 
         self.canvas = Canvas(self.master)
         self.canvas.grid(row=1, columnspan=5, sticky="NSEW")
