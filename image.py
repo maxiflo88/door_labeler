@@ -13,25 +13,49 @@ class image:
         self.master=master
         self.segm_path=img_path.replace('img','segm')
         self.doors=[]
+        self.labels=[{'id':1, 'name':'kreisa 1','color':'#abeb34'}, 
+                    {'id':2, 'name':'kreisa 2','color':'#93eb34' },
+                    {'id':3, 'name':'kreisa 3','color':'#83eb34' },
+                    {'id':4, 'name':'kreisa 4','color':'#53eb34' },
+                    {'id':5, 'name':'kreisa 5','color':'#34eb3a' },
+                    {'id':6, 'name':'kreisa 6','color':'#34eb68' },
+                    {'id':7, 'name':'laba 1','color':'#eb3434' },
+                    {'id':8, 'name':'laba 2','color':'#eb4634' },
+                    {'id':9, 'name':'laba 3','color':'#eb5934' },
+                    {'id':10, 'name':'laba 4','color':'#eb7734' },
+                    {'id':11, 'name':'laba 5','color':'#eb8f34' },
+                    {'id':12, 'name':'laba 6','color':'#ebab34' }]
         self.ids=0
-        self.detectJsonFile(self.segm_path.replace('.png', '.json'), self.img_path.replace('.png', '.json'))
+        self.detectJsonFile(self.img_path.replace('.png', '.json'))
 
-    def detectJsonFile(self, json_path1, json_path2):
+    def detectJsonFile(self, json_path):
 
-        if os.path.exists(json_path2):
-            with open(json_path2, 'r') as f:
+        if os.path.exists(json_path):
+            with open(json_path, 'r') as f:
                 data = json.load(f)
                 bbox=data["annotations"][0]['bbox']
                 keypoints=data["annotations"][0]['keypoints']
                 self.addDoors(bbox, keypoints)
 
-        elif os.path.exists(json_path1):
-            with open(json_path1, 'r') as f:
-                data = json.load(f)
-                bbox=data["annotations"][0]['bbox']
-                self.addDoors(bbox)
 
-        
+    def save(self):   
+        #TODO kad pabeigts samainit lai iet self.img_path un lade ari sadus failus
+        im = PIL.Image.open(self.segm_path)
+        width, height = im.size
+        save_path=self.segm_path.replace('.png','.json')
+        images=[]
+        annotations=[]
+        images.append({'height': height, 'width': width, 'file_name': os.path.basename(self.img_path)})
+        for door in self.doors:
+            keypoints, num_keypoints=door.keypointFormat(self.labels)
+            annotations.append({'bbox': door.boundBox,'keypoints': keypoints, 'num_keypoints': num_keypoints})
+        cocoDataset = {
+                        "images": images,
+                        "annotations": annotations
+                        }
+        with open(save_path, 'w') as jsonfile:
+            json.dump(cocoDataset, jsonfile)
+        print(f'Saved {save_path}')
 
     def addDoors(self, boundBox, keypoints=None):
         if keypoints:
@@ -41,9 +65,9 @@ class image:
             if keypoints[5]==2:
                 key.append([*keypoints[3:5], 2])
             if keypoints[8]==2:
-                key.append([*keypoints[6:8], 3])
+                key.append([*keypoints[6:8], 7])
             if keypoints[11]==2:
-                key.append([*keypoints[9:11], 4])
+                key.append([*keypoints[9:11], 8])
             self.doors.append(door(self.ids, boundBox, key))
         else:
             self.doors.append(door(self.ids, boundBox))
@@ -135,7 +159,9 @@ class image:
                         x, y, label=keypoint
                         pointx=int(x/self.ratio)
                         pointy=int(y/self.ratio)
-                        label_colors=['', 'blue', 'red', 'green', 'brown']
+                        label_colors=['']
+                        label_colors.extend([color['color'] for color in self.labels])
+
                         point=canvas.create_oval(pointx-radius, pointy-radius, pointx+radius, pointy+radius, fill=label_colors[label], tags='points', activefill=rgb2hex(*color), outline="")
                         canvas.tag_bind(point,"<Button-1>", lambda event, ind=ind: self.show_options(event, [canvas, door.ids, ind]))
                 self.draw_lines(canvas)
@@ -146,18 +172,20 @@ class image:
                 canvas.delete(line_id)
         radius=5
         label_colors={'blue':None, 'red':None, 'green':None, 'brown':None}
-        connections=[['blue', 'red'],['red', 'brown'],['brown', 'green'],['green', 'blue']]
+        connections=[['blue', 'red', '#20B2AA'],['red', 'brown', '#820068'],['brown', 'green', '#F0553A'],['green', 'blue', '#78825E']]
         point_ids=canvas.find_withtag('points')
+
         for point_id in point_ids:
             for key in label_colors:
                 if canvas.itemcget(point_id, "fill")==key:
                     label_colors[key]=canvas.coords(point_id)
                     break
+
         for connection in connections:
             if label_colors[connection[0]]!=None and label_colors[connection[1]]!=None:
                 x1, y1, _, _= label_colors[connection[0]]
                 x2, y2, _, _= label_colors[connection[1]]
-                canvas.create_line(x1+radius, y1+radius, x2+radius, y2+radius, tags='lines',width=5, fill='green')
+                canvas.create_line(x1+radius, y1+radius, x2+radius, y2+radius, tags='lines', width=5, fill=connection[2])
         
 
     def show_options(self, *args):
@@ -165,14 +193,15 @@ class image:
         pressed_id = event.widget.find_closest(event.x, event.y)[0]
         selected_key=args[1]
         rcmenu = Menu(self.master, tearoff=0)
-        rcmenu.add_command(label='kreisa prieksa', command = lambda:self.selected_menu_options(1, pressed_id, selected_key))
-        rcmenu.add_command(label='kreisa aizmugure', command = lambda:self.selected_menu_options(2, pressed_id, selected_key))
-        rcmenu.add_command(label='laba prieksa', command = lambda:self.selected_menu_options(3, pressed_id, selected_key))
-        rcmenu.add_command(label='laba aizmugure', command = lambda:self.selected_menu_options(4, pressed_id, selected_key))
+        for label in self.labels:
+            #generate menu list
+            label_id=label['id']
+            rcmenu.add_command(label=label['name'], command = lambda label_id=label_id:self.selected_menu_options(label_id, pressed_id, selected_key))
         rcmenu.post(event.x_root, event.y_root)
 
     def selected_menu_options(self, *event):
-        label_colors=['', 'blue', 'red', 'green', 'brown']
+        label_colors=['']
+        label_colors.extend([color['color'] for color in self.labels])
         label=event[0]
         pressed_id=event[1]
         canvas=event[2][0]

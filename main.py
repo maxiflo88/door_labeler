@@ -40,24 +40,7 @@ class Paint(object):
         
     def save(self):
         image=self.images[self.img_index]
-        annotations=[]
-        images=[]
-        im = Image.open(image.img_path)
-        width, height = im.size
-        save_path=image.img_path.replace('.png','.json')
-
-        images.append({'height': height, 'width': width, 'file_name': os.path.basename(image.img_path)})
-        for door in image.doors:
-            keypoints, num_keypoints=door.keypointFormat()
-            annotations.append({'bbox': door.boundBox,'keypoints': keypoints, 'num_keypoints': num_keypoints})
-        cocoDataset = {
-                        "images": images,
-                        "annotations": annotations
-                        }
-        with open(save_path, 'w') as jsonfile:
-            json.dump(cocoDataset, jsonfile)
-        print(f'Saved {save_path}')
-        self.drawImage()
+        image.save()
 
     def detect_doors(self):
         image=self.images[self.img_index]
@@ -101,4 +84,3 @@ if __name__ == '__main__':
     root = Tk()
     Paint(root)
     root.mainloop()
-

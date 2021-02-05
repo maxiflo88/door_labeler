@@ -1,3 +1,4 @@
+import numpy as np
 class door:
     
     def __init__(self, ids, boundBox=None, keypoints=[]):
@@ -5,22 +6,18 @@ class door:
         self.boundBox=boundBox
         self.keypoints=keypoints
 
-    def keypointFormat(self):
-        keysFormated=np.zeros((4*3), dtype=np.int32)
+    def keypointFormat(self, labels):
+        keysFormated=np.zeros((len(labels)*3), dtype=np.int32)
         num_keypoints=0
         for keypoint in self.keypoints:
-            if keypoint[2]==1:
-                keysFormated[:3]=[*keypoint[:2], 2]
-                num_keypoints+=1
-            if keypoint[2]==2:
-                keysFormated[3:6]=[*keypoint[:2], 2]
-                num_keypoints+=1
-            if keypoint[2]==3:
-                keysFormated[6:9]=[*keypoint[:2], 2]
-                num_keypoints+=1
-            if keypoint[2]==4:
-                keysFormated[9:12]=[*keypoint[:2], 2]
-                num_keypoints+=1
+            range1=0
+            range2=3
+            for label in labels: 
+                if keypoint[2]==label['id']:
+                    keysFormated[range1:range1+3]=[*keypoint[:2], 2]
+                    num_keypoints+=1
+                range1=range2
+                range2+=3
         return keysFormated.tolist(), num_keypoints
 
     def addKeypointLabel(self, keypoint_id, label):
