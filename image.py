@@ -123,8 +123,7 @@ class image:
         if self.doors:
             for door in self.doors:
                 color=np.random.randint(0, 255, (3)).tolist()
-                thickness=3
-                # cv2.rectangle(img, door.boundBox, color, thickness)
+                radius=5
                 x, y, w, h=door.boundBox
                 x1=int(x/self.ratio)
                 y1=int(y/self.ratio)
@@ -137,10 +136,30 @@ class image:
                         pointx=int(x/self.ratio)
                         pointy=int(y/self.ratio)
                         label_colors=['', 'blue', 'red', 'green', 'brown']
-                        point=canvas.create_oval(pointx-5, pointy-5, pointx+5, pointy+5, fill=label_colors[label], tags='points', activefill=rgb2hex(*color), outline="")
+                        point=canvas.create_oval(pointx-radius, pointy-radius, pointx+radius, pointy+radius, fill=label_colors[label], tags='points', activefill=rgb2hex(*color), outline="")
                         canvas.tag_bind(point,"<Button-1>", lambda event, ind=ind: self.show_options(event, [canvas, door.ids, ind]))
-                        #TODO ieladet jau izveidotos keypointus
- 
+                self.draw_lines(canvas)
+
+    def draw_lines(self, canvas):
+        if len(canvas.find_withtag('lines')) != 0:
+            for line_id in canvas.find_withtag('lines'):
+                canvas.delete(line_id)
+        radius=5
+        label_colors={'blue':None, 'red':None, 'green':None, 'brown':None}
+        connections=[['blue', 'red'],['red', 'brown'],['brown', 'green'],['green', 'blue']]
+        point_ids=canvas.find_withtag('points')
+        for point_id in point_ids:
+            for key in label_colors:
+                if canvas.itemcget(point_id, "fill")==key:
+                    label_colors[key]=canvas.coords(point_id)
+                    break
+        for connection in connections:
+            if label_colors[connection[0]]!=None and label_colors[connection[1]]!=None:
+                x1, y1, _, _= label_colors[connection[0]]
+                x2, y2, _, _= label_colors[connection[1]]
+                canvas.create_line(x1+radius, y1+radius, x2+radius, y2+radius, tags='lines',width=5, fill='green')
+        
+
     def show_options(self, *args):
         event=args[0]
         pressed_id = event.widget.find_closest(event.x, event.y)[0]
@@ -166,6 +185,7 @@ class image:
 
         canvas.itemconfig(pressed_id, fill=label_colors[label])
         self.doors[doors_id].addKeypointLabel(keypoint_id, label) 
+        self.draw_lines(canvas)
 
     def draw(self, canvas, wwidth, wheight):
         
