@@ -6,7 +6,7 @@ class door:
         self.boundBox=boundBox
         self.keypoints=keypoints
 
-    def keypointFormat(self, labels):
+    def toCocoFormatKeypoints(self, labels):
         keysFormated=np.zeros((len(labels)*3), dtype=np.int32)
         num_keypoints=0
         for keypoint in self.keypoints:
@@ -20,6 +20,11 @@ class door:
                 range2+=3
         return keysFormated.tolist(), num_keypoints
 
+    def fromCocoFormatKeypoints(self):
+        '''
+        Read list of keypoints from Coco format [x, y, v, x, y, v] to [[x, y, 1][ x, y, 2]]
+        '''
+        pass
     def addKeypointLabel(self, keypoint_id, label):
         ksize=len(self.keypoints)
         for i in range(ksize):

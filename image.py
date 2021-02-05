@@ -29,9 +29,13 @@ class image:
                                         [2, 8, '#820068'],
                                         [8, 7, '#F0553A'],
                                         [7, 1, '#78825E'], 
-                                        [3, 4, '#78825E'], 
-                                        [4, 5, '#78825E'], 
-                                        [5, 6, '#78825E']]
+                                        [3, 4, '#34e1eb'], 
+                                        [4, 5, '#34abeb'], 
+                                        [5, 6, '#eb34eb'],
+                                        [8, 9, '#80d9a2'],
+                                        [9, 10, '#80bdd9'],
+                                        [10, 11, '#34ebc3'],
+                                        [11, 12, '#4ecfbd']]
         self.ids=0
         self.detectJsonFile(self.img_path.replace('.png', '.json'))
 
@@ -43,6 +47,9 @@ class image:
                 for d in data['annotations']:
                     bbox=d['bbox']
                     keypoints=d['keypoints']
+                    keypoints=self.fromCocoFormatKeypoints(keypoints)
+                    if len(keypoints)==4:
+                        keypoints=self.oldKeypointFormat(keypoints)
                     self.addDoors(bbox, keypoints)
 
 
@@ -50,12 +57,12 @@ class image:
         #TODO kad pabeigts samainit lai iet self.img_path un lade ari sadus failus
         im = PIL.Image.open(self.segm_path)
         width, height = im.size
-        save_path=self.segm_path.replace('.png','.json')
+        save_path=self.img_path.replace('.png','.json')
         images=[]
         annotations=[]
         images.append({'height': height, 'width': width, 'file_name': os.path.basename(self.img_path)})
         for door in self.doors:
-            keypoints, num_keypoints=door.keypointFormat(self.labels)
+            keypoints, num_keypoints=door.toCocoFormatKeypoints(self.labels)
             annotations.append({'bbox': door.boundBox,'keypoints': keypoints, 'num_keypoints': num_keypoints})
         cocoDataset = {
                         "images": images,
@@ -65,18 +72,33 @@ class image:
             json.dump(cocoDataset, jsonfile)
         print(f'Saved {save_path}')
 
+    def fromCocoFormatKeypoints(self, keypoints):
+        '''
+        Read list of keypoints from Coco format [x, y, v, x, y, v] to [[x, y, 1][ x, y, 2]]
+        '''
+        key=[]
+        range1=0
+        range2=3
+        for ind in range(len(keypoints)//3):
+            keypoint=keypoints[range1:range2]
+            if keypoint[2]==2:
+                key.append([*keypoint[:2], ind+1])
+            range1=range2
+            range2+=3
+        return key
+
+    def oldKeypointFormat(self, keypoints):
+        '''
+        Old format with only 4 keypoints corrects ids
+        '''
+        keypoints[2][2]=7
+        keypoints[3][2]=8
+
+        return keypoints
+
     def addDoors(self, boundBox, keypoints=None):
         if keypoints:
-            key=[]
-            if keypoints[2]==2:
-                key.append([*keypoints[:2], 1])
-            if keypoints[5]==2:
-                key.append([*keypoints[3:5], 2])
-            if keypoints[8]==2:
-                key.append([*keypoints[6:8], 7])
-            if keypoints[11]==2:
-                key.append([*keypoints[9:11], 8])
-            self.doors.append(door(self.ids, boundBox, key))
+            self.doors.append(door(self.ids, boundBox, keypoints))
         else:
             self.doors.append(door(self.ids, boundBox))
         
@@ -186,12 +208,13 @@ class image:
             point1=None
             point2=None
             for label in self.labels:
-                if point1!=None and point2!=None: 
-                    connections.append([point1, point2, key_connection[2]])
-                    break
                 if key_connection[0]==label['id']: point1=label['color']
                 elif key_connection[1]==label['id']: point2=label['color']
 
+                if point1!=None and point2!=None: 
+                    connections.append([point1, point2, key_connection[2]])
+                    break
+                
         point_ids=canvas.find_withtag('points')
 
         for point_id in point_ids:
@@ -204,7 +227,7 @@ class image:
             if label_colors[connection[0]]!=None and label_colors[connection[1]]!=None:
                 x1, y1, _, _= label_colors[connection[0]]
                 x2, y2, _, _= label_colors[connection[1]]
-                canvas.create_line(x1+radius, y1+radius, x2+radius, y2+radius, tags='lines', width=5, fill=connection[2])
+                canvas.create_line(x1+radius, y1+radius, x2+radius, y2+radius, tags='lines', width=3, fill=connection[2])
         
 
     def show_options(self, *args):
