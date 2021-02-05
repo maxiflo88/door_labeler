@@ -25,6 +25,13 @@ class image:
                     {'id':10, 'name':'laba 4','color':'#eb7734' },
                     {'id':11, 'name':'laba 5','color':'#eb8f34' },
                     {'id':12, 'name':'laba 6','color':'#ebab34' }]
+        self.keypoint_connection_rules=[[1, 2, '#20B2AA'],
+                                        [2, 8, '#820068'],
+                                        [8, 7, '#F0553A'],
+                                        [7, 1, '#78825E'], 
+                                        [3, 4, '#78825E'], 
+                                        [4, 5, '#78825E'], 
+                                        [5, 6, '#78825E']]
         self.ids=0
         self.detectJsonFile(self.img_path.replace('.png', '.json'))
 
@@ -33,9 +40,10 @@ class image:
         if os.path.exists(json_path):
             with open(json_path, 'r') as f:
                 data = json.load(f)
-                bbox=data["annotations"][0]['bbox']
-                keypoints=data["annotations"][0]['keypoints']
-                self.addDoors(bbox, keypoints)
+                for d in data['annotations']:
+                    bbox=d['bbox']
+                    keypoints=d['keypoints']
+                    self.addDoors(bbox, keypoints)
 
 
     def save(self):   
@@ -171,8 +179,19 @@ class image:
             for line_id in canvas.find_withtag('lines'):
                 canvas.delete(line_id)
         radius=5
-        label_colors={'blue':None, 'red':None, 'green':None, 'brown':None}
-        connections=[['blue', 'red', '#20B2AA'],['red', 'brown', '#820068'],['brown', 'green', '#F0553A'],['green', 'blue', '#78825E']]
+        label_colors={color['color']:None for color in self.labels}
+        connections=[]
+        #TODO sadalit pusi no f-jas  isaka f-ja
+        for key_connection in self.keypoint_connection_rules:
+            point1=None
+            point2=None
+            for label in self.labels:
+                if point1!=None and point2!=None: 
+                    connections.append([point1, point2, key_connection[2]])
+                    break
+                if key_connection[0]==label['id']: point1=label['color']
+                elif key_connection[1]==label['id']: point2=label['color']
+
         point_ids=canvas.find_withtag('points')
 
         for point_id in point_ids:
