@@ -4,7 +4,6 @@ from PIL import ImageTk, Image, ImageDraw, ImageColor
 from tkinter import filedialog
 from glob import glob
 import os
-import json
 from image import image
 class Paint(object):
     #TODO izveidot zoom f-iju

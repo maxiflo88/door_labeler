@@ -26,7 +26,8 @@ class image:
                     {'id':11, 'name':'laba 5','color':'#eb8f34' },
                     {'id':12, 'name':'laba 6','color':'#ebab34' }]
         self.keypoint_connection_rules=[[1, 2, '#20B2AA'],
-                                        [2, 8, '#820068'],
+                                        [2, 3, '#cc1260'],
+                                        [3, 9, '#820068'],
                                         [8, 7, '#F0553A'],
                                         [7, 1, '#78825E'], 
                                         [3, 4, '#34e1eb'], 
@@ -177,7 +178,7 @@ class image:
         if self.doors:
             for door in self.doors:
                 color=np.random.randint(0, 255, (3)).tolist()
-                radius=5
+                radius=3
                 x, y, w, h=door.boundBox
                 x1=int(x/self.ratio)
                 y1=int(y/self.ratio)
@@ -200,7 +201,7 @@ class image:
         if len(canvas.find_withtag('lines')) != 0:
             for line_id in canvas.find_withtag('lines'):
                 canvas.delete(line_id)
-        radius=5
+        radius=3
         label_colors={color['color']:None for color in self.labels}
         connections=[]
         #TODO sadalit pusi no f-jas  isaka f-ja
@@ -229,10 +230,21 @@ class image:
                 x2, y2, _, _= label_colors[connection[1]]
                 canvas.create_line(x1+radius, y1+radius, x2+radius, y2+radius, tags='lines', width=3, fill=connection[2])
         
+    def closest_point(self, event, x, y):
+        radius=3
+        points=event.widget.find_withtag('points')
+        allpoints=np.zeros((len(points), 2), np.int)
+        for count, point_id  in enumerate(points):
+            allpoints[count]=event.widget.coords(point_id)[:2]
+        allpoints+=radius
+
+        closest_id=np.argmin(np.sum(abs(allpoints-[x, y]), axis=1))
+        return points[closest_id]
 
     def show_options(self, *args):
         event=args[0]
-        pressed_id = event.widget.find_closest(event.x, event.y)[0]
+        # pressed_id = event.widget.find_closest(event.x, event.y)[0]
+        pressed_id=self.closest_point(event, event.x, event.y)
         selected_key=args[1]
         rcmenu = Menu(self.master, tearoff=0)
         for label in self.labels:
