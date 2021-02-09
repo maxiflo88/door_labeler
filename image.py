@@ -49,13 +49,13 @@ class image:
                     bbox=d['bbox']
                     keypoints=d['keypoints']
                     keypoints=self.fromCocoFormatKeypoints(keypoints)
-                    if len(keypoints)==4:
-                        keypoints=self.oldKeypointFormat(keypoints)
+                    # if len(keypoints)==4:
+                    #     keypoints=self.oldKeypointFormat(keypoints)
                     self.addDoors(bbox, keypoints)
 
 
     def save(self):   
-        #TODO kad pabeigts samainit lai iet self.img_path un lade ari sadus failus
+
         im = PIL.Image.open(self.segm_path)
         width, height = im.size
         save_path=self.img_path.replace('.png','.json')
