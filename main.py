@@ -7,11 +7,12 @@ import os
 from image import image
 class Paint(object):
     #TODO izveidot zoom f-iju
-    #TODO izveidot lai punkti savelkas ar linijam
+    #TODO izveidot lai punktus var ielikt jebkura vieta
     def __init__(self, master):
         self.master=master
         self.master.columnconfigure(0, weight=1)
         self.master.columnconfigure(1, weight=2)
+        
         self.master.rowconfigure(1, weight=1)
         self.images=[]
 
