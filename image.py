@@ -9,6 +9,8 @@ import imutils
 from door import *
 #TODO Zoom f-tion
 #TODO in every bbox can only be specific points
+#TODO fix design
+#TODO create that design is responsible to size
 class image:
     def __init__(self, img_path, master):
         self.img_path=img_path
