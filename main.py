@@ -35,6 +35,7 @@ class Paint(object):
         self.img_next_button.grid(row=2, column=5, sticky="NSEW")
 
         self.canvas = Canvas(self.master)
+        self.canvas.bind("<Button-1>", self.create_point)
         self.canvas.grid(row=1, columnspan=5, sticky="NSEW")
         self.drawImage()
         
@@ -66,6 +67,11 @@ class Paint(object):
             if self.img_index<0:
                 self.img_index=len(self.images)-1
             self.drawImage()
+
+    def create_point(self, event):
+        if self.images:
+            image=self.images[self.img_index]
+            image.addKeypoint(event, self.canvas)
 
     def openfn(self):
         dir_path = filedialog.askdirectory()

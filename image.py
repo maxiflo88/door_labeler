@@ -7,6 +7,8 @@ from tkinter import *
 from colormap import rgb2hex
 import imutils
 from door import *
+#TODO Zoom f-tion
+#TODO in every bbox can only be specific points
 class image:
     def __init__(self, img_path, master):
         self.img_path=img_path
@@ -105,6 +107,32 @@ class image:
         
         self.ids+=1
 
+    def addKeypoint(self, event, canvas):
+        #TODO parbaudit vai ir bound box ietvaros
+        doors_id=0
+        rcmenu = Menu(self.master, tearoff=0)
+        for label in self.labels:
+            #generate menu list
+            label_id=label['id']
+            rcmenu.add_command(label=label['name'], command = lambda label_id=label_id, event=event:self.addKeypointOptions(event, doors_id, canvas, label_id))
+        rcmenu.post(event.x_root, event.y_root)
+
+    def addKeypointOptions(self, event, doors_id, canvas, label_id):
+        radius=3
+        label_colors=['']
+        label_colors.extend([color['color'] for color in self.labels])
+        color=np.random.randint(0, 255, (3)).tolist()
+
+        point_ids=canvas.find_withtag('points')
+        for point_id in point_ids:
+            if canvas.itemcget(point_id, "fill")==label_colors[label_id]:
+                canvas.itemconfig(point_id, fill='')
+        
+        pressed_id=canvas.create_oval(event.x-radius, event.y-radius, event.x+radius, event.y+radius, fill=label_colors[label_id], tags='points', activefill=rgb2hex(*color), outline="")
+        self.doors[doors_id].keypoints.append([event.x*self.ratio, event.y*self.ratio, label_id])
+        self.doors[doors_id].addKeypointLabel(-1, label_id) 
+        self.draw_lines(canvas)
+
     def resize(self, img, wwidth, wheight):
         height, width=img.shape[:2]
         newWidth=wwidth
@@ -184,7 +212,7 @@ class image:
                 y1=int(y/self.ratio)
                 x2=int((w)/self.ratio)
                 y2=int((h)/self.ratio)
-                canvas.create_rectangle(x1, y1, x1+x2, y1+y2, activefill=rgb2hex(*color), stipple="gray50")
+                canvas.create_rectangle(x1, y1, x1+x2, y1+y2, activefill=rgb2hex(*color), stipple="gray50", tags='bbox')
                 if door.keypoints:
                     for ind, keypoint in enumerate(door.keypoints):
                         x, y, label=keypoint
